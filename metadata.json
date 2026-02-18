@@ -1,0 +1,5 @@
+{
+  "name": "Mobile Sandbox Environment",
+  "description": "A high-security web-based dashboard for static APK analysis and URL reputation scanning. Features SHA-256 hashing, permission auditing, and AI-powered risk assessment.",
+  "requestFramePermissions": []
+}
