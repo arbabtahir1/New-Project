@@ -3,9 +3,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobile Sandbox Environment</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Mobile Sandbox Enterprise</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0c10">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script type="importmap">
 {
   "imports": {
@@ -17,8 +21,35 @@
   }
 }
 </script>
+<style>
+    :root {
+        --safe: #4ade80;
+        --suspicious: #fbbf24;
+        --malicious: #f87171;
+    }
+    body {
+        font-family: 'Roboto', sans-serif;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .m3-card {
+        border-radius: 28px;
+        background: #1c1b1f;
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .m3-card:active {
+        transform: scale(0.98);
+    }
+    .bottom-nav {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    @media print {
+        .no-print { display: none !important; }
+    }
+</style>
 </head>
-<body class="bg-gray-900 text-gray-100 antialiased">
+<body class="bg-[#0a0c10] text-[#e6e1e5] antialiased">
     <div id="root"></div>
 </body>
 </html>

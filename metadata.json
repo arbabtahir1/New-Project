@@ -1,5 +1,8 @@
 {
-  "name": "Mobile Sandbox Environment",
-  "description": "A high-security web-based dashboard for static APK analysis and URL reputation scanning. Features SHA-256 hashing, permission auditing, and AI-powered risk assessment.",
-  "requestFramePermissions": []
+  "name": "Mobile Sandbox Enterprise",
+  "description": "Professional-grade Android security sandbox. Features Material 3 UI, static APK decomposition, and AI-powered forensic auditing.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
 }
