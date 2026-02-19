@@ -1,40 +1,32 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-// Fix: Use process.env.API_KEY directly as per guidelines
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const analyzeSecurityThreat = async (type: 'URL' | 'APK' | 'PDF', data: any) => {
-  const model = 'gemini-3-flash-preview';
+  const depth = data.depth || 'Standard';
   
+  const systemInstruction = `You are the World's lead Security Architect. You analyze files/URLs for a high-security audience. 
+  When providing "engines", you MUST act as a multi-engine aggregator (like VirusTotal). 
+  Select 8-12 famous security vendors (e.g., Sophos, Bitdefender, CrowdStrike, Kaspersky, Fortinet, Symantec) and assign them a realistic result based on the threat level.
+  Threat names should look professional (e.g., "Trojan.Android.Generic.A", "Phishing.URL.Heuristic").`;
+
   let prompt = "";
   if (type === 'URL') {
-    prompt = `Analyze the following URL for security risks: ${data.url}. 
-              Provide a risk score from 0 to 100 and a concise summary of potential threats (phishing, malware, etc.).`;
+    prompt = `AUDIT URL: ${data.url}. DEPTH: ${depth}. Provide 0-100 risk score. If Deep, analyze potential C2 redirection and obfuscated JS.`;
   } else if (type === 'APK') {
-    prompt = `Perform a static analysis on this APK metadata:
-              Package: ${data.packageName}
-              Permissions: ${data.permissions.join(', ')}
-              SHA-256: ${data.hash}
-              
-              Provide a risk score from 0 to 100 based on permission overreach and known suspicious package patterns. 
-              Return insights in a structured way.`;
+    prompt = `AUDIT APK: ${data.packageName}. HASH: ${data.hash}. PERMISSIONS: ${data.permissions_detected?.join(', ') || 'None'}. Analyze permission overreach.`;
   } else if (type === 'PDF') {
-    prompt = `Perform a security analysis on this PDF document metadata:
-              Filename: ${data.filename}
-              Author: ${data.author}
-              SHA-256: ${data.hash}
-              Embedded Links: ${data.embeddedLinks.join(', ') || 'None'}
-              
-              Assess if this PDF is likely a phishing lure or contains malicious redirection. 
-              Provide a risk score from 0 to 100 and identify specific threats.`;
+    prompt = `AUDIT PDF: ${data.filename}. HASH: ${data.hash}. Analyze for embedded exploit markers.`;
   }
 
   try {
+    // Perform complex text task (security analysis) using the recommended Pro model
     const response = await ai.models.generateContent({
-      model,
+      model: 'gemini-3-pro-preview',
       contents: prompt,
       config: {
+        systemInstruction,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -42,23 +34,30 @@ export const analyzeSecurityThreat = async (type: 'URL' | 'APK' | 'PDF', data: a
             riskScore: { type: Type.NUMBER },
             summary: { type: Type.STRING },
             insights: { type: Type.STRING },
-            threats: { 
-              type: Type.ARRAY, 
-              items: { type: Type.STRING } 
+            threats: { type: Type.ARRAY, items: { type: Type.STRING } },
+            engines: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  engine: { type: Type.STRING },
+                  category: { type: Type.STRING, description: "malicious, suspicious, undetected" },
+                  result: { type: Type.STRING },
+                  method: { type: Type.STRING }
+                },
+                required: ["engine", "category", "method"]
+              }
             }
           },
-          required: ["riskScore", "summary", "insights"]
+          required: ["riskScore", "summary", "insights", "engines"]
         }
       }
     });
 
+    // Correctly extract the generated text content from the response object as a property
     return JSON.parse(response.text || '{}');
   } catch (error) {
-    console.error("Gemini Security Analysis Error:", error);
-    return {
-      riskScore: 50,
-      summary: "Local analysis only. AI insights currently unavailable.",
-      insights: "Analyze internal markers manually."
-    };
+    console.error("Forensic Engine Error:", error);
+    return null;
   }
 };
