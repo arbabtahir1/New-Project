@@ -1,6 +1,6 @@
 {
-  "name": "Mobile Sandbox Enterprise",
-  "description": "Professional-grade Android security sandbox. Features Material 3 UI, static APK decomposition, and AI-powered forensic auditing.",
+  "name": "ShadowInspect Forensic Suite",
+  "description": "Enterprise-grade forensic auditing and malware triage system. Professional Material 3 UI with AI-powered static decomposition.",
   "requestFramePermissions": [
     "camera",
     "geolocation"

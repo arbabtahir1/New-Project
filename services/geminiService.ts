@@ -6,22 +6,29 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 export const analyzeSecurityThreat = async (type: 'URL' | 'APK' | 'PDF', data: any) => {
   const depth = data.depth || 'Standard';
   
-  const systemInstruction = `You are the World's lead Security Architect. You analyze files/URLs for a high-security audience. 
-  When providing "engines", you MUST act as a multi-engine aggregator (like VirusTotal). 
-  Select 8-12 famous security vendors (e.g., Sophos, Bitdefender, CrowdStrike, Kaspersky, Fortinet, Symantec) and assign them a realistic result based on the threat level.
-  Threat names should look professional (e.g., "Trojan.Android.Generic.A", "Phishing.URL.Heuristic").`;
+  const systemInstruction = `You are a world-class security forensic architect at ShadowInspect Labs. 
+  You provide professional multi-engine triage results similar to VirusTotal and GitHub Advisory.
+  
+  Assign risk scores (0-100).
+  For the "threats" array, return a list of specific vulnerabilities.
+  Format each threat as: "TITLE: DESCRIPTION OF HARM AND IMPACT".
+  
+  Your "engines" results MUST include detections from at least 3 simulated vendors (e.g., VT Core, UrlScan, GitHub Security).
+  
+  Your "insights" must warning the investigator about specific forensic anomalies.
+  If the input data looks safe, provide a low risk score but identify behavioral best practices.
+  Strictly follow the JSON schema. Be professional and objective.`;
 
   let prompt = "";
   if (type === 'URL') {
-    prompt = `AUDIT URL: ${data.url}. DEPTH: ${depth}. Provide 0-100 risk score. If Deep, analyze potential C2 redirection and obfuscated JS.`;
+    prompt = `AUDIT URL: ${data.url}. RIGOR: ${depth}. Analyze for phishing, credential harvesting, and known C2 redirection patterns. Provide multi-vendor heuristic hits.`;
   } else if (type === 'APK') {
-    prompt = `AUDIT APK: ${data.packageName}. HASH: ${data.hash}. PERMISSIONS: ${data.permissions_detected?.join(', ') || 'None'}. Analyze permission overreach.`;
+    prompt = `AUDIT APK: ${data.packageName}. HASH: ${data.hash}. PERMISSIONS: ${data.permissions_detected?.join(', ') || 'None'}. Analyze for high-risk permission chaining and potential spyware vectors.`;
   } else if (type === 'PDF') {
-    prompt = `AUDIT PDF: ${data.filename}. HASH: ${data.hash}. Analyze for embedded exploit markers.`;
+    prompt = `AUDIT PDF: ${data.filename}. HASH: ${data.hash}. Analyze for embedded JS exploits, malformed streams, and phishing headers.`;
   }
 
   try {
-    // Perform complex text task (security analysis) using the recommended Pro model
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: prompt,
@@ -49,15 +56,15 @@ export const analyzeSecurityThreat = async (type: 'URL' | 'APK' | 'PDF', data: a
               }
             }
           },
-          required: ["riskScore", "summary", "insights", "engines"]
+          required: ["riskScore", "summary", "insights", "engines", "threats"]
         }
       }
     });
 
-    // Correctly extract the generated text content from the response object as a property
-    return JSON.parse(response.text || '{}');
-  } catch (error) {
-    console.error("Forensic Engine Error:", error);
-    return null;
+    if (!response.text) throw new Error("EMPTY_RESPONSE");
+    return JSON.parse(response.text);
+  } catch (error: any) {
+    // If it's a quota error, rethrow it for the UI to handle the cooldown
+    throw error;
   }
 };
